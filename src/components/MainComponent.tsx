@@ -98,7 +98,7 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
                   url.searchParams.set('client_id', 'CId.xyw6-lPflvaxR9CrGR-zHBfGJ_8dUmVtai_61qRSplwM');
                   url.searchParams.set('response_type', 'code');
                   url.searchParams.set('response_mode', 'query'); // Use query instead of fragment
-                  url.searchParams.set('redirect_uri', process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:4200/etcm/oauth');
+                  url.searchParams.set('redirect_uri', process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:8080/oauth/callback');
                   url.searchParams.set('scope', 'contract.list parameter.earthquake socket.start telegram.list telegram.data telegram.get.earthquake gd.earthquake');
                   
                   const state = Math.random().toString(36).substring(2, 15);
