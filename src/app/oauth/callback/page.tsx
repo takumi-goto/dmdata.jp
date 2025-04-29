@@ -13,11 +13,10 @@ export default function OAuthCallback() {
     const handleOAuthCallback = async () => {
       try {
         if (searchParams.has('code')) {
-          const code = searchParams.get('code');
+          const code = searchParams.get('code') || '';
           console.log('認証コードを受け取りました:', code);
           
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const isAuthenticated = await oauth2Service.refreshTokenCheck();
+          const isAuthenticated = await oauth2Service.handleAuthorizationCode(code);
           
           if (isAuthenticated) {
             console.log('OAuth認証が成功しました');

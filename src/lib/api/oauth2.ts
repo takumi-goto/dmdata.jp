@@ -40,6 +40,34 @@ class Oauth2Service {
     return !!(await Settings.get('oauthRefreshToken'));
   }
 
+  async handleAuthorizationCode(code: string): Promise<boolean> {
+    try {
+      if (!this.oauth2) {
+        await this.init();
+        if (!this.oauth2) {
+          console.error('OAuth2 client not initialized');
+          return false;
+        }
+      }
+
+      const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+      
+      if (tokenData && tokenData.refresh_token) {
+        await Settings.set('oauthRefreshToken', tokenData.refresh_token);
+        
+        await this.init();
+        
+        const isAuthenticated = await this.refreshTokenCheck();
+        return isAuthenticated;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error handling authorization code:', error);
+      return false;
+    }
+  }
+
   async init() {
     const refreshToken = await Settings.get('oauthRefreshToken');
     const oauthDPoPKeypair = await Settings.get('oauthDPoPKeypair') ? await Settings.get('oauthDPoPKeypair') : 'ES384';
