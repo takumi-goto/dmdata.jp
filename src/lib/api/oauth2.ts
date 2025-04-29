@@ -44,31 +44,6 @@ class Oauth2Service {
     const refreshToken = await Settings.get('oauthRefreshToken');
     const oauthDPoPKeypair = await Settings.get('oauthDPoPKeypair') ? await Settings.get('oauthDPoPKeypair') : 'ES384';
 
-    const customAuthorization = async (options: any) => {
-      const url = new URL('https://manager.dmdata.jp/account/oauth2/v1/auth');
-      const query = url.searchParams;
-      
-      query.set('client_id', 'CId.xyw6-lPflvaxR9CrGR-zHBfGJ_8dUmVtai_61qRSplwM');
-      query.set('response_type', 'code');
-      query.set('response_mode', 'query'); // Use 'query' instead of 'fragment'
-      query.set('redirect_uri', OAUTH_REDIRECT_URI);
-      
-      if (options.state) {
-        query.set('state', options.state);
-      }
-      
-      if (options.codeChallenge) {
-        query.set('code_challenge', options.codeChallenge);
-        query.set('code_challenge_method', options.codeChallengeMethod || 'S256');
-      }
-      
-      if (options.scopes && options.scopes.length > 0) {
-        query.set('scope', options.scopes.join(' '));
-      }
-      
-      return url.toString();
-    };
-
     this.oauth2 = new OAuth2Code({
       endpoint: {
         authorization: 'https://manager.dmdata.jp/account/oauth2/v1/auth',
@@ -82,8 +57,7 @@ class Oauth2Service {
       },
       pkce: true,
       refreshToken,
-      dpop: oauthDPoPKeypair,
-      customAuthorization
+      dpop: oauthDPoPKeypair
     });
 
     this.refreshToken = refreshToken;

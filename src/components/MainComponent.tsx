@@ -93,7 +93,19 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
               <p className="mb-4 font-medium">このアプリケーションを使用するには、以下のアプリケーション連携をしてください。</p>
               <button 
                 className="px-6 py-3 bg-secondary hover:bg-accent text-white font-medium rounded-lg transition-colors duration-200 shadow-lg flex items-center mx-auto"
-                onClick={() => onInit()}
+                onClick={() => {
+                  const url = new URL('https://manager.dmdata.jp/account/oauth2/v1/auth');
+                  url.searchParams.set('client_id', 'CId.xyw6-lPflvaxR9CrGR-zHBfGJ_8dUmVtai_61qRSplwM');
+                  url.searchParams.set('response_type', 'code');
+                  url.searchParams.set('response_mode', 'query'); // Use query instead of fragment
+                  url.searchParams.set('redirect_uri', process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:4200/etcm/oauth');
+                  url.searchParams.set('scope', 'contract.list parameter.earthquake socket.start telegram.list telegram.data telegram.get.earthquake gd.earthquake');
+                  
+                  const state = Math.random().toString(36).substring(2, 15);
+                  url.searchParams.set('state', state);
+                  
+                  window.location.href = url.toString();
+                }}
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
