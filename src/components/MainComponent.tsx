@@ -96,8 +96,8 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
                 onClick={() => {
                   const url = new URL('https://manager.dmdata.jp/account/oauth2/v1/auth');
                   url.searchParams.set('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
-                  url.searchParams.set('response_type', 'code');
-                  url.searchParams.set('response_mode', 'query'); // Use query instead of fragment
+                  url.searchParams.set('response_type', 'token');
+                  url.searchParams.set('response_mode', 'fragment'); // Use fragment for token response type
                   url.searchParams.set('redirect_uri', process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:8080/oauth/callback');
                   url.searchParams.set('scope', 'contract.list parameter.earthquake socket.start telegram.list telegram.data telegram.get.earthquake gd.earthquake');
                   

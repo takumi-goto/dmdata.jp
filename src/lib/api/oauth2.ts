@@ -51,7 +51,7 @@ class Oauth2Service {
         introspect: 'https://manager.dmdata.jp/account/oauth2/v1/introspect'
       },
       client: {
-        id: 'CId.xyw6-lPflvaxR9CrGR-zHBfGJ_8dUmVtai_61qRSplwM',
+        id: 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE',
         scopes: ['contract.list', 'parameter.earthquake', 'socket.start', 'telegram.list', 'telegram.data', 'telegram.get.earthquake', 'gd.earthquake'],
         redirectUri: OAUTH_REDIRECT_URI
       },
