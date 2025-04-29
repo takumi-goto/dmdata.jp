@@ -25,7 +25,7 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
           <div className="bg-gray-800 bg-opacity-80 p-6 rounded-lg shadow-xl">
             {status === 'no-contract' && (
               <div className="space-y-4">
-                <svg className="w-16 h-16 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-10 h-10 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
                 <h2 className="text-2xl font-bold text-red-400">契約情報がありません</h2>
@@ -35,7 +35,7 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
             
             {status === 'no-auth' && (
               <div className="space-y-4">
-                <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-10 h-10 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                 </svg>
                 <h2 className="text-2xl font-bold text-yellow-400">認証エラー</h2>
@@ -76,7 +76,7 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
         {initMode && (
           <div className="bg-gray-800 bg-opacity-80 p-8 rounded-lg shadow-xl">
             <div className="mb-6">
-              <svg className="w-20 h-20 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-12 h-12 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
               </svg>
               <h1 className="text-3xl font-bold mb-2">地震情報ビューア</h1>
