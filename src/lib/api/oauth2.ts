@@ -50,18 +50,76 @@ class Oauth2Service {
         }
       }
 
-      const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+      console.log('Exchanging authorization code for token...');
+      console.log('Code:', code);
+      console.log('Redirect URI:', OAUTH_REDIRECT_URI);
       
-      if (tokenData && tokenData.refresh_token) {
-        await Settings.set('oauthRefreshToken', tokenData.refresh_token);
+      this.oauth2 = new OAuth2Code({
+        endpoint: {
+          authorization: 'https://manager.dmdata.jp/account/oauth2/v1/auth',
+          token: 'https://manager.dmdata.jp/account/oauth2/v1/token',
+          introspect: 'https://manager.dmdata.jp/account/oauth2/v1/introspect'
+        },
+        client: {
+          id: 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE',
+          scopes: ['contract.list', 'parameter.earthquake', 'socket.start', 'telegram.list', 'telegram.data', 'telegram.get.earthquake', 'gd.earthquake'],
+          redirectUri: OAUTH_REDIRECT_URI
+        },
+        pkce: true,
+        dpop: 'ES384'
+      });
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append('grant_type', 'authorization_code');
+        formData.append('code', code);
+        formData.append('redirect_uri', OAUTH_REDIRECT_URI);
         
-        await this.init();
+        const response = await fetch('https://manager.dmdata.jp/account/oauth2/v1/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${btoa(`CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE:`)}`
+          },
+          body: formData
+        });
         
-        const isAuthenticated = await this.refreshTokenCheck();
-        return isAuthenticated;
+        console.log('Token response status:', response.status);
+        
+        const tokenData = await response.json();
+        console.log('Token response:', tokenData);
+        
+        if (tokenData && tokenData.refresh_token) {
+          await Settings.set('oauthRefreshToken', tokenData.refresh_token);
+          await this.init();
+          
+          const isAuthenticated = await this.refreshTokenCheck();
+          return isAuthenticated;
+        }
+        
+        console.error('No refresh token in response:', tokenData);
+        return false;
+      } catch (fetchError) {
+        console.error('Error fetching token:', fetchError);
+        
+        try {
+          const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+          
+          if (tokenData && tokenData.refresh_token) {
+            await Settings.set('oauthRefreshToken', tokenData.refresh_token);
+            await this.init();
+            
+            const isAuthenticated = await this.refreshTokenCheck();
+            return isAuthenticated;
+          }
+          
+          console.error('No refresh token in SDK response:', tokenData);
+          return false;
+        } catch (sdkError) {
+          console.error('SDK token exchange error:', sdkError);
+          return false;
+        }
       }
-      
-      return false;
     } catch (error) {
       console.error('Error handling authorization code:', error);
       return false;
