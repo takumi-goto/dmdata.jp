@@ -1,7 +1,7 @@
 import { OAuth2Code } from '@dmdata/oauth2-client';
 import { Settings } from '@/lib/db/settings';
 
-const OAUTH_REDIRECT_URI = process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:8080/oauth/callback';
+const OAUTH_REDIRECT_URI = process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:4200/oauth/callback';
 
 class Oauth2Service {
   private oauth2?: OAuth2Code;
