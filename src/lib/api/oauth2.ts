@@ -54,6 +54,17 @@ class Oauth2Service {
       console.log('Code:', code);
       console.log('Redirect URI:', OAUTH_REDIRECT_URI);
       
+      console.log('OAuth2 client options before token exchange:', JSON.stringify({
+        endpoint: (this.oauth2 as any).option?.endpoint,
+        client: {
+          id: (this.oauth2 as any).option?.client?.id,
+          redirectUri: (this.oauth2 as any).option?.client?.redirectUri,
+          scopes: (this.oauth2 as any).option?.client?.scopes
+        },
+        pkce: (this.oauth2 as any).option?.pkce,
+        dpop: (this.oauth2 as any).option?.dpop
+      }, null, 2));
+      
       this.oauth2 = new OAuth2Code({
         endpoint: {
           authorization: 'https://manager.dmdata.jp/account/oauth2/v1/auth',
