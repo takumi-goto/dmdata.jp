@@ -54,36 +54,28 @@ class Oauth2Service {
       console.log('Code:', code);
       console.log('Redirect URI:', OAUTH_REDIRECT_URI);
       
+      const originalOAuth2 = this.oauth2;
+      
       console.log('OAuth2 client options before token exchange:', JSON.stringify({
-        endpoint: (this.oauth2 as any).option?.endpoint,
+        endpoint: (originalOAuth2 as any).option?.endpoint,
         client: {
-          id: (this.oauth2 as any).option?.client?.id,
-          redirectUri: (this.oauth2 as any).option?.client?.redirectUri,
-          scopes: (this.oauth2 as any).option?.client?.scopes
+          id: (originalOAuth2 as any).option?.client?.id,
+          redirectUri: (originalOAuth2 as any).option?.client?.redirectUri,
+          scopes: (originalOAuth2 as any).option?.client?.scopes
         },
-        pkce: (this.oauth2 as any).option?.pkce,
-        dpop: (this.oauth2 as any).option?.dpop
+        pkce: (originalOAuth2 as any).option?.pkce,
+        dpop: (originalOAuth2 as any).option?.dpop
       }, null, 2));
       
-      this.oauth2 = new OAuth2Code({
-        endpoint: {
-          authorization: 'https://manager.dmdata.jp/account/oauth2/v1/auth',
-          token: 'https://manager.dmdata.jp/account/oauth2/v1/token',
-          introspect: 'https://manager.dmdata.jp/account/oauth2/v1/introspect'
-        },
-        client: {
-          id: 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE',
-          secret: '', // Explicitly set empty string for client secret
-          scopes: ['contract.list', 'parameter.earthquake', 'socket.start', 'telegram.list', 'telegram.data', 'telegram.get.earthquake', 'gd.earthquake'],
-          redirectUri: OAUTH_REDIRECT_URI
-        },
-        pkce: true,
-        dpop: 'ES384'
-      });
-
+      
       try {
         console.log('Attempting token exchange using SDK...');
-        const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+        const pkceCodeVerifier = (originalOAuth2 as any).option?.pkce ? 
+          window.crypto.randomUUID() : null;
+        
+        console.log('Using PKCE code_verifier:', pkceCodeVerifier);
+        
+        const tokenData = await (originalOAuth2 as any).authorizationAccessToken(code, pkceCodeVerifier);
         console.log('SDK token exchange successful:', tokenData);
         
         if (tokenData && tokenData.refresh_token) {
