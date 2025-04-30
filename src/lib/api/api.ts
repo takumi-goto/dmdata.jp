@@ -20,6 +20,15 @@ class ApiService {
           },
           (error: any) => {
             console.error('API request error:', error?.message);
+            console.error('Error config:', error?.config);
+            
+            if (!error) {
+              error = new Error('Unknown API error');
+            }
+            
+            if (!error.config) {
+              error.config = {};
+            }
             
             if (!error.response) {
               error.response = { 
@@ -28,7 +37,15 @@ class ApiService {
                 headers: {},
                 url: error.config?.url || 'unknown'
               };
+            } else if (!error.response.url && error.config) {
+              error.response.url = error.config.url || 'unknown';
             }
+            
+            console.error('Modified error object:', {
+              message: error.message,
+              config: error.config,
+              response: error.response
+            });
             
             return Promise.reject(error);
           }
