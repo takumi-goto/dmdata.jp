@@ -62,6 +62,7 @@ class Oauth2Service {
         },
         client: {
           id: 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE',
+          secret: '', // Explicitly set empty string for client secret
           scopes: ['contract.list', 'parameter.earthquake', 'socket.start', 'telegram.list', 'telegram.data', 'telegram.get.earthquake', 'gd.earthquake'],
           redirectUri: OAUTH_REDIRECT_URI
         },
@@ -70,24 +71,9 @@ class Oauth2Service {
       });
 
       try {
-        const formData = new URLSearchParams();
-        formData.append('grant_type', 'authorization_code');
-        formData.append('code', code);
-        formData.append('redirect_uri', OAUTH_REDIRECT_URI);
-        
-        const response = await fetch('https://manager.dmdata.jp/account/oauth2/v1/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${btoa(`CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE:`)}`
-          },
-          body: formData
-        });
-        
-        console.log('Token response status:', response.status);
-        
-        const tokenData = await response.json();
-        console.log('Token response:', tokenData);
+        console.log('Attempting token exchange using SDK...');
+        const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+        console.log('SDK token exchange successful:', tokenData);
         
         if (tokenData && tokenData.refresh_token) {
           await Settings.set('oauthRefreshToken', tokenData.refresh_token);
@@ -97,13 +83,32 @@ class Oauth2Service {
           return isAuthenticated;
         }
         
-        console.error('No refresh token in response:', tokenData);
+        console.error('No refresh token in SDK response:', tokenData);
         return false;
-      } catch (fetchError) {
-        console.error('Error fetching token:', fetchError);
+      } catch (sdkError) {
+        console.error('SDK token exchange error:', sdkError);
         
         try {
-          const tokenData = await (this.oauth2 as any).authorizationAccessToken(code, null);
+          console.log('Falling back to direct fetch implementation...');
+          const formData = new URLSearchParams();
+          formData.append('grant_type', 'authorization_code');
+          formData.append('code', code);
+          formData.append('redirect_uri', OAUTH_REDIRECT_URI);
+          
+          formData.append('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
+          
+          const response = await fetch('https://manager.dmdata.jp/account/oauth2/v1/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+          });
+          
+          console.log('Token response status:', response.status);
+          
+          const tokenData = await response.json();
+          console.log('Token response:', tokenData);
           
           if (tokenData && tokenData.refresh_token) {
             await Settings.set('oauthRefreshToken', tokenData.refresh_token);
@@ -113,10 +118,10 @@ class Oauth2Service {
             return isAuthenticated;
           }
           
-          console.error('No refresh token in SDK response:', tokenData);
+          console.error('No refresh token in response:', tokenData);
           return false;
-        } catch (sdkError) {
-          console.error('SDK token exchange error:', sdkError);
+        } catch (fetchError) {
+          console.error('Error fetching token:', fetchError);
           return false;
         }
       }
@@ -138,6 +143,7 @@ class Oauth2Service {
       },
       client: {
         id: 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE',
+        secret: '', // Explicitly set empty string for client secret
         scopes: ['contract.list', 'parameter.earthquake', 'socket.start', 'telegram.list', 'telegram.data', 'telegram.get.earthquake', 'gd.earthquake'],
         redirectUri: OAUTH_REDIRECT_URI
       },
