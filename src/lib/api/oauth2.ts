@@ -2,6 +2,7 @@ import { OAuth2Code } from '@dmdata/oauth2-client';
 import { Settings } from '@/lib/db/settings';
 
 const OAUTH_REDIRECT_URI = process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:4200/oauth/callback';
+const PKCE_STORAGE_KEY = 'oauthPkceCodeVerifier';
 
 class Oauth2Service {
   private oauth2?: OAuth2Code;
@@ -14,6 +15,14 @@ class Oauth2Service {
   async refreshTokenDelete() {
     await Settings.delete('oauthRefreshToken');
     this.refreshToken = undefined;
+  }
+  
+  async savePkceCodeVerifier(codeVerifier: string) {
+    await Settings.set(PKCE_STORAGE_KEY, codeVerifier);
+  }
+  
+  async getPkceCodeVerifier(): Promise<string | null> {
+    return await Settings.get(PKCE_STORAGE_KEY);
   }
 
   async oAuth2ClassReInit() {
@@ -39,6 +48,39 @@ class Oauth2Service {
   async refreshTokenCheck() {
     return !!(await Settings.get('oauthRefreshToken'));
   }
+  
+  async getAuthorizationUrl(): Promise<string> {
+    if (!this.oauth2) {
+      await this.init();
+      if (!this.oauth2) {
+        throw new Error('OAuth2 client initialization failed');
+      }
+    }
+    
+    const pkceCodeVerifier = window.crypto.randomUUID();
+    await this.savePkceCodeVerifier(pkceCodeVerifier);
+    
+    const url = new URL('https://manager.dmdata.jp/account/oauth2/v1/auth');
+    url.searchParams.set('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('response_mode', 'query');
+    url.searchParams.set('redirect_uri', OAUTH_REDIRECT_URI);
+    url.searchParams.set('scope', 'contract.list parameter.earthquake socket.start telegram.list telegram.data telegram.get.earthquake gd.earthquake');
+    
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pkceCodeVerifier);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const codeChallenge = btoa(String.fromCharCode.apply(null, hashArray))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    
+    url.searchParams.set('code_challenge', codeChallenge);
+    url.searchParams.set('code_challenge_method', 'S256');
+    
+    return url.toString();
+  }
 
   async handleAuthorizationCode(code: string): Promise<boolean> {
     try {
@@ -54,29 +96,42 @@ class Oauth2Service {
       console.log('Code:', code);
       console.log('Redirect URI:', OAUTH_REDIRECT_URI);
       
-      const originalOAuth2 = this.oauth2;
+      const pkceCodeVerifier = await this.getPkceCodeVerifier();
+      console.log('Using stored PKCE code_verifier:', pkceCodeVerifier);
       
-      console.log('OAuth2 client options before token exchange:', JSON.stringify({
-        endpoint: (originalOAuth2 as any).option?.endpoint,
-        client: {
-          id: (originalOAuth2 as any).option?.client?.id,
-          redirectUri: (originalOAuth2 as any).option?.client?.redirectUri,
-          scopes: (originalOAuth2 as any).option?.client?.scopes
-        },
-        pkce: (originalOAuth2 as any).option?.pkce,
-        dpop: (originalOAuth2 as any).option?.dpop
-      }, null, 2));
-      
+      if (!pkceCodeVerifier) {
+        console.error('PKCE code verifier not found');
+        return false;
+      }
       
       try {
-        console.log('Attempting token exchange using SDK...');
-        const pkceCodeVerifier = (originalOAuth2 as any).option?.pkce ? 
-          window.crypto.randomUUID() : null;
+        console.log('Attempting token exchange using direct fetch...');
         
-        console.log('Using PKCE code_verifier:', pkceCodeVerifier);
+        const formData = new URLSearchParams();
+        formData.append('grant_type', 'authorization_code');
+        formData.append('code', code);
+        formData.append('redirect_uri', OAUTH_REDIRECT_URI);
+        formData.append('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
+        formData.append('code_verifier', pkceCodeVerifier);
         
-        const tokenData = await (originalOAuth2 as any).authorizationAccessToken(code, pkceCodeVerifier);
-        console.log('SDK token exchange successful:', tokenData);
+        const response = await fetch('https://manager.dmdata.jp/account/oauth2/v1/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData
+        });
+        
+        console.log('Token response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Token exchange error:', errorText);
+          return false;
+        }
+        
+        const tokenData = await response.json();
+        console.log('Token response:', tokenData);
         
         if (tokenData && tokenData.refresh_token) {
           await Settings.set('oauthRefreshToken', tokenData.refresh_token);
@@ -86,47 +141,11 @@ class Oauth2Service {
           return isAuthenticated;
         }
         
-        console.error('No refresh token in SDK response:', tokenData);
+        console.error('No refresh token in response');
         return false;
-      } catch (sdkError) {
-        console.error('SDK token exchange error:', sdkError);
-        
-        try {
-          console.log('Falling back to direct fetch implementation...');
-          const formData = new URLSearchParams();
-          formData.append('grant_type', 'authorization_code');
-          formData.append('code', code);
-          formData.append('redirect_uri', OAUTH_REDIRECT_URI);
-          
-          formData.append('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
-          
-          const response = await fetch('https://manager.dmdata.jp/account/oauth2/v1/token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formData
-          });
-          
-          console.log('Token response status:', response.status);
-          
-          const tokenData = await response.json();
-          console.log('Token response:', tokenData);
-          
-          if (tokenData && tokenData.refresh_token) {
-            await Settings.set('oauthRefreshToken', tokenData.refresh_token);
-            await this.init();
-            
-            const isAuthenticated = await this.refreshTokenCheck();
-            return isAuthenticated;
-          }
-          
-          console.error('No refresh token in response:', tokenData);
-          return false;
-        } catch (fetchError) {
-          console.error('Error fetching token:', fetchError);
-          return false;
-        }
+      } catch (error) {
+        console.error('Error during token exchange:', error);
+        return false;
       }
     } catch (error) {
       console.error('Error handling authorization code:', error);
@@ -152,7 +171,8 @@ class Oauth2Service {
       },
       pkce: true,
       refreshToken,
-      dpop: oauthDPoPKeypair
+      dpop: oauthDPoPKeypair,
+      waitingStart: false
     });
 
     this.refreshToken = refreshToken;

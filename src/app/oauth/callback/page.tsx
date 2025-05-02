@@ -23,10 +23,18 @@ export default function OAuthCallback() {
             setStatus('success');
             
             await oauth2Service.oAuth2ClassReInit();
+            
+            setTimeout(() => {
+              router.push('/');
+            }, 1000);
+            return;
           } else {
             console.error('OAuth認証に失敗しました');
             setStatus('error');
-            router.push('/?auth_error=true');
+            
+            setTimeout(() => {
+              router.push('/?auth_error=true');
+            }, 2000);
             return;
           }
         }
@@ -35,7 +43,10 @@ export default function OAuthCallback() {
       } catch (error) {
         console.error('OAuth callback error:', error);
         setStatus('error');
-        router.push('/?auth_error=true');
+        
+        setTimeout(() => {
+          router.push('/?auth_error=true');
+        }, 2000);
       }
     };
 

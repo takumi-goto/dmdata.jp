@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import MonitorComponent from './MonitorComponent';
+import { oauth2Service } from '../lib/api/oauth2';
 
 interface MainComponentProps {
   status?: 'ok' | 'loading' | 'no-contract' | 'no-auth';
@@ -93,18 +94,13 @@ export default function MainComponent({ status, initMode, packageInfo, onInit }:
               <p className="mb-4 font-medium">このアプリケーションを使用するには、以下のアプリケーション連携をしてください。</p>
               <button 
                 className="px-6 py-3 bg-secondary hover:bg-accent text-white font-medium rounded-lg transition-colors duration-200 shadow-lg flex items-center mx-auto"
-                onClick={() => {
-                  const url = new URL('https://manager.dmdata.jp/account/oauth2/v1/auth');
-                  url.searchParams.set('client_id', 'CId.LgawSy4V1SNsimqooHFBiVNvLjdZtS1K5dJL6wyX5gfE');
-                  url.searchParams.set('response_type', 'code');
-                  url.searchParams.set('response_mode', 'query'); // Use query for code response type
-                  url.searchParams.set('redirect_uri', process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:4200/oauth/callback');
-                  url.searchParams.set('scope', 'contract.list parameter.earthquake socket.start telegram.list telegram.data telegram.get.earthquake gd.earthquake');
-                  
-                  const state = Math.random().toString(36).substring(2, 15);
-                  url.searchParams.set('state', state);
-                  
-                  window.location.href = url.toString();
+                onClick={async () => {
+                  try {
+                    const authUrl = await oauth2Service.getAuthorizationUrl();
+                    window.location.href = authUrl;
+                  } catch (error) {
+                    console.error('Failed to generate authorization URL:', error);
+                  }
                 }}
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
