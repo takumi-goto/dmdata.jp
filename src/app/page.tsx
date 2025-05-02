@@ -23,9 +23,8 @@ export default function Home() {
         await contractCheck();
       } else {
         setInitMode(true);
+        setStatus('no-auth'); // Set explicit status instead of undefined
       }
-      
-      setStatus(undefined);
     };
     
     checkAuth();

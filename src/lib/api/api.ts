@@ -8,6 +8,28 @@ class ApiService {
     try {
       this.client = new DMDATA();
       
+      const originalResponseUse = (this.client as any).responseUse;
+      if (originalResponseUse) {
+        (this.client as any).responseUse = function(response: any) {
+          try {
+            if (!response) {
+              console.warn('Empty response in responseUse');
+              return Promise.reject(new Error('Empty response'));
+            }
+            
+            if (!response.config) {
+              console.warn('Missing config in responseUse');
+              response.config = { url: 'unknown' };
+            }
+            
+            return originalResponseUse.call(this, response);
+          } catch (error) {
+            console.error('Error in patched responseUse:', error);
+            return Promise.reject(error);
+          }
+        };
+      }
+      
       const originalAxios = (this.client as any).axios;
       if (originalAxios && originalAxios.interceptors && originalAxios.interceptors.response) {
         originalAxios.interceptors.response.use(
